@@ -1,0 +1,63 @@
+services:
+  shipping-generator:
+    image: observability-labs/app-tracking-shipping-generator
+    build:
+      dockerfile: Dockerfile
+      context: src/fake_data_generator/
+    ports:
+      - 5006:5006
+    networks: 
+      - observability-labs
+
+  shipping-api:
+    image: observability-labs/app-tracking-shipping-api
+    build:
+      dockerfile: Dockerfile
+      context: src/delivery_routes_api
+    ports:
+      - 5007:5007
+    networks: 
+      - observability-labs
+    depends_on:
+      - rabbitmq      
+
+  shipping-service:
+    image: observability-labs/app-tracking-shipping-service
+    build:
+      dockerfile: Dockerfile
+      context: src/delivery_routes_service
+    networks: 
+      - observability-labs
+    depends_on:
+      - rabbitmq
+      - mongo
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: observability-labs-app-tracking-rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks: 
+      - observability-labs
+
+  mongo:
+    image: mongo:latest
+    container_name: observability-labs-app-tracking-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks: 
+      - observability-labs      
+
+
+volumes:
+  mongo_data:
+
+networks: 
+  observability-labs:
+    driver: bridge
